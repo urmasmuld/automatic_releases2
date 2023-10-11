@@ -61,7 +61,7 @@ jobs:
           TAG=$(git describe --abbrev=0 --tags HEAD || echo "$(node -p "require('./package.json').version")")
 
           TITLE="Release $TAG"
-          BODY="Release notes for version $TAG"
+          BODY="$COMMIT_MESSAGE"
 
           # Create the release
           response=$(curl -X POST "https://api.github.com/repos/${{ github.repository }}/releases" \
