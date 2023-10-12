@@ -1,6 +1,6 @@
 {
   "name": "PlantTracker_Team2",
-  "version": "PATCH",
+  "version": "0.7.3",
   "description": "",
   "main": "index.js",
   "scripts": {
