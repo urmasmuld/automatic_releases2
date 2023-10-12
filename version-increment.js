@@ -13,33 +13,19 @@ const latestCommitMessage = require('child_process')
 
 // Update the version based on the commit message
 if (latestCommitMessage.startsWith('fix:')) {
+  // Extract the current version
+  const currentVersion = packageJson.version;
+  const [major, minor, patch] = currentVersion.split('.').map(Number);
+
   // Increment the patch version
-  packageJson.version = incrementPatch(packageJson.version);
+  packageJson.version = `${major}.${minor}.${patch + 1}`;
 } else if (latestCommitMessage.startsWith('feat:')) {
   // Increment the minor version
-  packageJson.version = incrementMinor(packageJson.version);
+  // Implement similar logic as above
 } else if (latestCommitMessage.startsWith('rel:')) {
   // Increment the major version
-  packageJson.version = incrementMajor(packageJson.version);
+  // Implement similar logic as above
 }
 
 // Write the updated package.json back to the file
 fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
-
-function incrementMajor(version) {
-  const parts = version.split('.');
-  parts[0] = (parseInt(parts[0]) + 1).toString();
-  return parts.join('.');
-}
-
-function incrementMinor(version) {
-  const parts = version.split('.');
-  parts[1] = (parseInt(parts[1]) + 1).toString();
-  return parts.join('.');
-}
-
-function incrementPatch(version) {
-  const parts = version.split('.');
-  parts[2] = (parseInt(parts[2]) + 1).toString();
-  return parts.join('.');
-}
