@@ -84,9 +84,3 @@ jobs:
               \"prerelease\": true
             }"
 
-          # Commit and push the updated package.json
-          git config user.name "${GITHUB_ACTOR}"
-          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
-          git commit -am "Bump version to $TAG"
-          git push --follow-tags
-
