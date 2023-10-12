@@ -37,7 +37,7 @@ jobs:
           tag_name: ${{ env.version }}
           release_name: Release ${{ env.version }}
           draft: false
-          prerelease: false
+          prerelease: true
 
       - name: Output release URL
         run: echo "Release URL is ${{ steps.create_release.outputs.html_url }}"
