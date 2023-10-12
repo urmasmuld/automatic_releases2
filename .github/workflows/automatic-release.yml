@@ -1,9 +1,9 @@
-name: Release
+name: automatic-release
 
 on:
   push:
     branches:
-      - main
+      - main # adjust this if you're working with a different branch
 
 jobs:
   release:
@@ -12,78 +12,32 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          ref: main
 
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: 18
+          node-version: '16'
+
+      - name: Install dependencies
+        run: npm install
 
       - name: Get version
         id: package_version
         run: |
           echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Determine Version Bump
-        id: version
-        run: |
-          COMMIT_MESSAGE=$(git log -1 --pretty=format:%s)
-          if [[ $COMMIT_MESSAGE == "feat:"* ]]; then
-            echo "::set-output name=version-bump::minor"
-          elif [[ $COMMIT_MESSAGE == "fix:"* ]]; then
-            echo "::set-output name=version-bump::patch"
-          elif [[ $COMMIT_MESSAGE == "rel:"* ]]; then
-            echo "::set-output name=version-bump::major"
-          else
-            echo "::set-output name=version-bump::none"
-          fi
-        shell: bash
-
-      - name: Fetch Tags
-        run: git fetch --tags
-
-      - name: Bump Version and Create Release
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION_BUMP=$(echo ${{ steps.version.outputs.version-bump }})
-          if [ "$VERSION_BUMP" == "minor" ]; then
-            npm --no-git-tag-version version minor
-          elif [ "$VERSION_BUMP" == "patch" ]; then
-            npm --no-git-tag-version version patch
-          elif [ "$VERSION_BUMP" == "major" ]; then
-            npm --no-git-tag-version version major
-          fi
+        with:
+          tag_name: ${{ env.version }}
+          release_name: Release ${{ env.version }}
+          draft: false
+          prerelease: false
 
-          # Use "0.0.1" as the default version if no tags were found
-          TAG=$(echo "$(node -p "require('./package.json').version")")
-
-          TITLE="Release $TAG"
-          BODY="$COMMIT_MESSAGE"
-
-          # Create the release
-          response=$(curl -X POST "https://api.github.com/repos/${{ github.repository }}/releases" \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -d "{
-              \"tag_name\": \"${TAG}\",
-              \"name\": \"${TITLE}\",
-              \"body\": \"${BODY}\",
-              \"draft\": false,
-              \"prerelease\": false
-            }")
-
-          # Extract the release ID from the API response
-          RELEASE_ID=$(echo "$response" | jq -r '.id')
-
-          # Mark the release as a prerelease
-          curl -X PATCH "https://api.github.com/repos/${{ github.repository }}/releases/${RELEASE_ID}" \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -d "{
-              \"prerelease\": true
-            }"
-
-
-
-            
+      - name: Output release URL
+        run: echo "Release URL is ${{ steps.create_release.outputs.html_url }}"
