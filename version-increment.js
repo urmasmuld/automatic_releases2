@@ -1,31 +1,23 @@
 const fs = require('fs');
-const path = require('path');
+const semver = require('semver');
+const packageJson = require('./package.json');
 
-// Load the package.json file
-const packageJsonPath = path.join(__dirname, 'package.json');
-const packageJson = require(packageJsonPath);
+const commitMessage = process.env.HUSKY_GIT_PARAMS;
 
-// Get the latest commit message
-const latestCommitMessage = require('child_process')
-  .execSync('git log -1 --pretty=%s')
-  .toString()
-  .trim();
+const incrementVersion = (currentVersion, commitMessage) => {
+  if (commitMessage.includes('fix:')) {
+    return semver.inc(currentVersion, 'patch');
+  } else if (commitMessage.includes('feat:')) {
+    return semver.inc(currentVersion, 'minor');
+  } else if (commitMessage.includes('rel:')) {
+    return semver.inc(currentVersion, 'major');
+  }
+  return null; // Return null if no increment needed
+};
 
-// Update the version based on the commit message
-if (latestCommitMessage.startsWith('fix:')) {
-  // Extract the current version
-  const currentVersion = packageJson.version;
-  const [major, minor, patch] = currentVersion.split('.').map(Number);
+const newVersion = incrementVersion(packageJson.version, commitMessage);
 
-  // Increment the patch version
-  packageJson.version = `${major}.${minor}.${patch + 1}`;
-} else if (latestCommitMessage.startsWith('feat:')) {
-  // Increment the minor version
-  // Implement similar logic as above
-} else if (latestCommitMessage.startsWith('rel:')) {
-  // Increment the major version
-  // Implement similar logic as above
+if (newVersion) {
+  packageJson.version = newVersion;
+  fs.writeFileSync('package.json', JSON.stringify(packageJson, null, 2) + '\n');
 }
-
-// Write the updated package.json back to the file
-fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
